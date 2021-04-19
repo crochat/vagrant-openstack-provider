@@ -430,7 +430,7 @@ Each time Vagrant OpenStack Provider runs it checks the installed plugin version
 print a warning on stderr if the plugin is not up-to-date.
 
 If for any reason you need to disable this check, set the environment variable
-`VAGRANT_OPENSTACK_VERSION_CKECK` to value `DISABLED` prior to run vagrant.
+`VAGRANT_OPENSTACK_VERSION_CHECK` to value `DISABLED` prior to run vagrant.
 
 ### CentOS/RHEL/Fedora (sudo: sorry, you must have a tty to run sudo)
 

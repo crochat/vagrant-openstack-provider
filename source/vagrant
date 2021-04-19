@@ -1,0 +1,10 @@
+#!/usr/bin/env bash
+
+# To use instead of classic vagrant command, when developing this plugin.
+# i.e. ./vagrant up
+
+
+#rm -r .vagrant
+#VAGRANT_LOG=debug bundle exec vagrant $@
+#VAGRANT_OPENSTACK_LOG=debug bundle exec vagrant $@
+bundle exec vagrant $@

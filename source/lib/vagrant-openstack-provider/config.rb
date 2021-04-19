@@ -9,6 +9,21 @@ module VagrantPlugins
       #
       attr_accessor :password
 
+      # Authentication type for Openstack. 'admin_token', 'http_basic', 'none', 'password', 'token', 'v2password', 'v2token',
+      # 'v3adfspassword', 'v3applicationcredential', 'v3fedkerb', 'v3kerberos', 'v3multifactor', 'v3oauth1', 'v3oidcaccesstoken',
+      # 'v3oidcauthcode', 'v3oidcclientcredentials', 'v3oidcpassword', 'v3password', 'v3samlpassword', 'v3token',
+      # 'v3tokenlessauth', 'v3totp'. So far, only v3 specific auth types have been implemented, and amongst all possible,
+      # only 'v3password', 'v3token, and 'v3oidcpassword' are currently available.
+      #
+      attr_accessor :auth_type
+
+      # Authentication method for Openstack. 'password' or 'token'
+      attr_accessor :auth_method
+
+      # Authentication token to use instead of user/pass, if auth_method is 'token'
+      #
+      attr_accessor :auth_token
+
       # The compute service url to access Openstack. If nil, it will read from hypermedia catalog form REST API
       #
       attr_accessor :openstack_compute_url
@@ -51,6 +66,11 @@ module VagrantPlugins
       # The name of the openstack project on witch the vm will be created.
       #
       attr_accessor :tenant_name
+
+      #
+      # The ID of the openstack project on which the vm will be created.
+      #
+      attr_accessor :project_id
 
       #
       # The name of the openstack project on witch the vm will be created, changed name in v3 identity API.
@@ -193,15 +213,35 @@ module VagrantPlugins
       # @return [String]
       attr_accessor :endpoint_type
 
-      # Specify the endpoint_type to use : publicL, admin, or internal (default is public)
+      # Specify the interface_type to use : publicL, admin, or internal (default is public)
       #
       # @return [String]
       attr_accessor :interface_type
+
+      # Specify the discovery_endpoint. Required in case of auth_type 'v3oidcauthcode', 'v3oidcclientcredentials',
+      # or 'v3oidcpassword'
+      attr_accessor :discovery_endpoint
+
+      # Specify the protocol. Required in case of auth_type 'v3adfspassword', 'v3fedkerb', 'v3oidcaccesstoken',
+      # 'v3oidcauthcode', 'v3oidcclientcredentials', 'v3oidcpassword', or 'v3samlpassword'
+      attr_accessor :protocol
+
+      # Specify the client_id. Required in case of auth_type 'v3oidcauthcode', 'v3oidcclientcredentials',
+      # or 'v3oidcpassword'
+      attr_accessor :client_id
+
+      # Specify the client_secret. Required in case of auth_type 'v3oidcauthcode', 'v3oidcclientcredentials',
+      # or 'v3oidcpassword'
+      attr_accessor :client_secret
 
       # Specify the authentication version to use : 2 or 3 (ddefault is 2()
       #
       # @return [String]
       attr_accessor :identity_api_version
+
+      # Identity provider. Required in case of auth_type 'v3adfspassword', 'v3fedkerb', 'v3oidcaccesstoken',
+      # 'v3oidcauthcode', 'v3oidcclientcredentials', 'v3oidcpassword', or 'v3samlpassword'
+      attr_accessor :identity_provider
 
       #
       # @return [Integer]
@@ -265,6 +305,9 @@ module VagrantPlugins
 
       def initialize
         @password = UNSET_VALUE
+        @auth_type = UNSET_VALUE
+        @auth_method = UNSET_VALUE
+        @auth_token = UNSET_VALUE
         @openstack_compute_url = UNSET_VALUE
         @openstack_network_url = UNSET_VALUE
         @openstack_volume_url = UNSET_VALUE
@@ -273,12 +316,19 @@ module VagrantPlugins
         @openstack_auth_url = UNSET_VALUE
         @endpoint_type = UNSET_VALUE
         @interface_type = UNSET_VALUE
+        @discovery_endpoint = UNSET_VALUE
+        @protocol = UNSET_VALUE
+        @client_id = UNSET_VALUE
+        @client_secret = UNSET_VALUE
         @identity_api_version = UNSET_VALUE
+        @identity_provider = UNSET_VALUE
         @region = UNSET_VALUE
         @flavor = UNSET_VALUE
         @image = UNSET_VALUE
         @volume_boot = UNSET_VALUE
         @tenant_name = UNSET_VALUE
+        @project_id = UNSET_VALUE
+        @project_name = UNSET_VALUE
         @server_name = UNSET_VALUE
         @username = UNSET_VALUE
         @rsync_includes = []
@@ -313,6 +363,8 @@ module VagrantPlugins
         @ssl_ca_file = UNSET_VALUE
         @ssl_verify_peer = UNSET_VALUE
         @domain_name = UNSET_VALUE
+        @user_domain_name = UNSET_VALUE
+        @project_domain_name = UNSET_VALUE
       end
 
       def merge(other)
@@ -336,8 +388,8 @@ module VagrantPlugins
             value = obj.instance_variable_get(key)
 
             if [:@networks, :@volumes, :@rsync_includes, :@rsync_ignore_files, :@floating_ip_pool, :@stacks].include? key
-              result.instance_variable_set(key, value) unless value.empty?
-            elsif [:@http, :@volume_boot].include? key
+              result.instance_variable_set(key, value) unless (value.nil? || value.empty?)
+            elsif [:@http].include? key
               result.instance_variable_set(key, instance_variable_get(key).merge(other.instance_variable_get(key))) if value != UNSET_VALUE
             else
               result.instance_variable_set(key, value) if value != UNSET_VALUE
@@ -356,6 +408,9 @@ module VagrantPlugins
       # rubocop:disable Metrics/CyclomaticComplexity,Metrics/PerceivedComplexity
       def finalize!
         @password = nil if @password == UNSET_VALUE
+        @auth_type = nil if @auth_type == UNSET_VALUE
+        @auth_method = nil if @auth_method == UNSET_VALUE
+        @auth_token = nil if @auth_token == UNSET_VALUE
         @openstack_compute_url = nil if @openstack_compute_url == UNSET_VALUE
         @openstack_network_url = nil if @openstack_network_url == UNSET_VALUE
         @openstack_orchestration_url = nil if @openstack_orchestration_url == UNSET_VALUE
@@ -364,12 +419,18 @@ module VagrantPlugins
         @openstack_auth_url = nil if @openstack_auth_url == UNSET_VALUE
         @endpoint_type = 'publicURL' if @endpoint_type == UNSET_VALUE
         @interface_type = 'public' if @interface_type == UNSET_VALUE
+        @discovery_endpoint = nil if @discovery_endpoint == UNSET_VALUE
+        @protocol = nil if @protocol == UNSET_VALUE
+        @client_id = nil if @client_id == UNSET_VALUE
+        @client_secret = nil if @client_secret == UNSET_VALUE
         @identity_api_version = '2' if @identity_api_version == UNSET_VALUE
+        @identity_provider = nil if @identity_provider == UNSET_VALUE
         @region = nil if @region == UNSET_VALUE
         @flavor = nil if @flavor == UNSET_VALUE
         @image = nil if @image == UNSET_VALUE
         @volume_boot = nil if @volume_boot == UNSET_VALUE
         @tenant_name = nil if @tenant_name == UNSET_VALUE
+        @project_id = nil if @project_id == UNSET_VALUE
         @project_name = nil if @project_name == UNSET_VALUE
         @server_name = nil if @server_name == UNSET_VALUE
         @username = nil if @username == UNSET_VALUE
@@ -387,6 +448,23 @@ module VagrantPlugins
         @user_data = nil if @user_data == UNSET_VALUE
         @metadata = nil if @metadata == UNSET_VALUE
         @ssh_disabled = false if @ssh_disabled == UNSET_VALUE
+
+        # Force the default auth_method, according to auth_type
+        if !@auth_type.nil?
+          if @identity_api_version == '2'
+            if @auth_type == 'password' || @auth_type == 'v2password'
+              @auth_method = 'password'
+            elsif @auth_type == 'token' || @auth_type == 'v2token'
+              @auth_method = 'token'
+            end
+          elsif @identity_api_version == '3'
+            if @auth_type == 'v3password' || @auth_type == 'v3adfspassword' || @auth_type == 'v3oidcpassword' || @auth_type == 'v3samlpassword'
+              @auth_method = 'password'
+            elsif @auth_type == 'v3token' || @auth_type == 'v3oidcaccesstoken'
+              @auth_method = 'token'
+            end
+          end
+        end
 
         # The value of use_legacy_synced_folders is used by action chains
         # to determine which synced folder implementation to run.
@@ -440,8 +518,13 @@ module VagrantPlugins
       def validate(machine)
         errors = _detected_errors
 
-        errors << I18n.t('vagrant_openstack.config.password_required') if @password.nil? || @password.empty?
-        errors << I18n.t('vagrant_openstack.config.username_required') if @username.nil? || @username.empty?
+        if @auth_method == 'token'
+          errors << I18n.t('vagrant_openstack.config.auth_token_required') if @auth_token.nil? || @auth_token.empty?
+        else
+          errors << I18n.t('vagrant_openstack.config.password_required') if @password.nil? || @password.empty?
+          errors << I18n.t('vagrant_openstack.config.username_required') if @username.nil? || @username.empty?
+        end
+
         errors << I18n.t('vagrant_openstack.config.invalid_api_version') unless  %w(2 3).include?(@identity_api_version)
 
         validate_api_version(errors)
@@ -478,16 +561,16 @@ module VagrantPlugins
           errors << I18n.t('vagrant_openstack.config.tenant_name_required') if @tenant_name.nil? || @tenant_name.empty?
           errors << I18n.t('vagrant_openstack.config.invalid_endpoint_type') unless  %w(publicURL adminURL internalURL).include?(@endpoint_type)
         elsif @identity_api_version == '3'
-          if @domain_name == UNSET_VALUE || @domain_name.nil? || @domain_name.empty?
-            if (@user_domain_name.nil? || @user_domain_name.empty?) && (@project_domain_name_name.nil? || @project_domain_name.empty?)
+          if @domain_name.nil? && @auth_method != 'token'
+            if @user_domain_name.nil? && project_domain_name.nil?
               errors << I18n.t('vagrant_openstack.config.domain_required')
-            elsif @user_domain_name.nil? || @user_domain_name.empty?
+            elsif @user_domain_name.nil?
               errors << I18n.t('vagrant_openstack.config.user_domain_required')
-            elsif @project_domain_name.nil? || @project_domain_name.empty?
+            elsif !@project_name.nil? && @project_domain_name.nil?
               errors << I18n.t('vagrant_openstack.config.project_domain_required')
             end
           end
-          errors << I18n.t('vagrant_openstack.config.project_name_required') if @project_name.nil? || @project_name.empty?
+          errors << I18n.t('vagrant_openstack.config.project_name_required') if @project_name.nil? && @auth_method != 'token'
           errors << I18n.t('vagrant_openstack.config.invalid_interface_type') unless  %w(public admin internal).include?(@interface_type)
         end
       end

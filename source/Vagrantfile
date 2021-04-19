@@ -1,20 +1,92 @@
+# -*- mode: ruby -*-
+# vi: set ft=ruby :
+
+# Using the exact same clouds.yaml file which can be used by the standard Python openstack client
+# i.e. openstack --os-cloud myopenstack-project1
+# In order to use non-standard authentication type (here, we use v3oidcpassword), this plugin will
+# use this client to ask for a token to be used then for all the rest of the actions.
+# Install this required client with: apt-get install python3-openstackclient
+#
+# I was inspired by https://github.com/dalees/vagrant-openstack-provider/tree/feature/auth_token
+# but I had to reimplement it because it had to go further, and right terms had to be used
+# (i.e. v3oidcpassword is auth_type, and password/token for identity parameters is auth_method)
+#
+# TODO: implement other non-standard authentication types in lib/keystone.rb
+# See https://docs.openstack.org/keystoneauth/latest/plugin-options.html
+
+cloud_file = './clouds.yaml'
+cloud = 'myopenstack-project1'
+ssh_username = 'ubuntu'
+ssh_keypair_name = 'myopenstackssh'
+ssh_private_key_file = '~/.ssh/id_rsa.myopenstackssh'
+
+
 require 'vagrant-openstack-provider'
+require 'yaml'
 
+OSparams = begin
+  YAML.load(File.open(cloud_file))['clouds'][cloud]
+rescue ArgumentError => e
+  puts "Can't parse YAML cloud file (#{cloud_file}): #{e.message}"
+end
+
+#
+# This is quite the minimal configuration necessary
+# to start an OpenStack instance using Vagrant on
+# an OpenStack with Keystone v3 API, using
+# KeyCloak authentication with OpenID-Connect
+#
 Vagrant.configure('2') do |config|
+  config.ssh.username = ssh_username
+  config.ssh.private_key_path = ssh_private_key_file
 
-  config.vm.box = 'openstack'
+  config.vm.provider :openstack do |os, ov|
+    os.identity_api_version             = OSparams['identity_api_version'].to_s
+    os.openstack_auth_url               = OSparams['auth']['auth_url']
+    os.identity_provider                = OSparams['auth']['identity_provider']
+    os.discovery_endpoint               = OSparams['auth']['discovery_endpoint']
+    os.auth_type                        = OSparams['auth_type']
+    os.protocol                         = OSparams['auth']['protocol']
+    os.client_id                        = OSparams['auth']['client_id']
+    os.client_secret                    = OSparams['auth']['client_secret']
+    os.project_name                     = OSparams['auth']['project_name']
+    os.project_domain_name              = OSparams['auth']['project_domain_name']
+    os.username                         = OSparams['auth']['username']
+    os.password                         = OSparams['auth']['password']
 
-  config.ssh.username = ENV['OS_SSH_USERNAME']
+    os.keypair_name                     = ssh_keypair_name
+    #os.floating_ip_pool                 = 'ext-net1'
+    #os.floating_ip_pool_always_allocate = false
+    os.flavor                           = 'm1.tiny'
+    #os.image                            = 'Ubuntu-20.04'
+    #os.networks                        << 'privnet-dev1'
+    os.security_groups                  = ['open']
 
-  config.vm.provider :openstack do |os|
-    os.openstack_auth_url    = ENV['OS_AUTH_URL']
-    os.tenant_name           = ENV['OS_TENANT_NAME']
-    os.username              = ENV['OS_USERNAME']
-    os.password              = ENV['OS_PASSWORD']
-    os.floating_ip_pool      = ENV['OS_FLOATING_IP_POOL']
-    os.flavor                = ENV['OS_FLAVOR']
-    os.image                 = ENV['OS_IMAGE']
+    ov.nfs.functional = false
   end
+
+  config.vm.define 'vagrant-os1' do |s|
+    s.vm.provider :openstack do |os, override|
+      os.server_name                    = 'vagrant1'
+      os.flavor                         = 'm1.tiny'
+      os.networks                       = [
+        {
+          name: 'privnet-dev1',
+          address: '192.168.100.3'
+        }
+      ]
+
+      os.volume_boot                    = {
+        image: 'Ubuntu-20.04',
+        size: 40,
+        delete_on_destroy: false
+      }
+
+      override.ssh.username             = 'ubuntu'
+    end
+  end
+
+  config.vm.synced_folder ".", "/vagrant", disabled: true
 
   config.vm.provision "shell", inline: "echo 'ok' > ~/provision"
 end

@@ -8,8 +8,8 @@ require 'vagrant-openstack-provider/version_checker'
 
 # This is a sanity check to make sure no one is attempting to install
 # this into an early Vagrant version.
-if Vagrant::VERSION < '1.4.0'
-  fail 'Openstack Cloud provider is only compatible with Vagrant 1.4+'
+if Vagrant::VERSION < '2.2.14'
+  fail 'Openstack Cloud provider is only compatible with Vagrant 2.2.14+'
 end
 
 module VagrantPlugins
@@ -35,9 +35,9 @@ module VagrantPlugins
         Provider
       end
 
-      # TODO: Remove the if guard when Vagrant 1.8.0 is the minimum version.
+      # TODO: Remove the if guard when Vagrant 2.2.14 is the minimum version.
       # rubocop:disable IndentationWidth
-      if Gem::Version.new(Vagrant::VERSION) >= Gem::Version.new('1.8.0')
+      if Gem::Version.new(Vagrant::VERSION) >= Gem::Version.new('2.2.14')
       provider_capability('openstack', 'snapshot_list') do
         require_relative 'cap/snapshot_list'
         Cap::SnapshotList

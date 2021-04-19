@@ -101,6 +101,8 @@ en:
       Sync folders are disabled in the provider configuration
 
     config:
+      auth_token_required: |-
+        An auth_token is required when auth_method is 'token' (password (sometimes also username) will be ignored).
       password_required: |-
         A password is required.
       username_required: |-
@@ -392,6 +394,8 @@ en:
         %{size} endpoints are available for service '%{type}' but only the first one will be used
       authentication: |-
         Authentication on project %{project} with user %{user}
+      authentication3: |-
+        Authentication on project %{project} (domain %{project_domain}) with user %{user} (domain %{user_domain})
 
     command:
       main_synopsis: |-
