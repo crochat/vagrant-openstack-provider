@@ -1,3 +1,23 @@
+# 0.13.1 (April 19, 2021)
+
+IMPROVEMENTS:
+
+  - Added new parameters: auth_method, identity_provider, discovery_endpoint, protocol, client_id, client_secret
+  - Made distinction between auth_type and auth_method:
+    - auth_type is for authentication type for OpenStack, as documented on
+      https://docs.openstack.org/keystoneauth/latest/plugin-options.html
+    - auth_method is just for password/token, as it was implemented as auth_type by
+      https://github.com/dalees/vagrant-openstack-provider/tree/feature/auth_token
+  - Impemented authentication plugins by using the standard Python client (python3-openstackclient)
+  - Implemented v3oidcpassword authentication type (many other plugins have to be implemented in lib/keystone.rb)
+    Changed Vagrantfile to match this authentication type
+  - In the Vagrantfile, used the clouds.yaml configuration file, as it's documented in the standard client
+
+BUG FIXES:
+
+  - volume_boot didn't work at all, as it was blocked in the merge method of config.rb. Just made a quick and
+    dirty fix by removing the test condition... sorry
+
 # 0.13.0 (July 30, 2018)
 
 See https://github.com/ggiamarchi/vagrant-openstack-provider/milestone/20?closed=1
