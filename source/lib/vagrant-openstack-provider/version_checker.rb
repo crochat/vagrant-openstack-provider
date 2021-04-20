@@ -25,7 +25,7 @@ module VagrantPlugins
         @status = nil
         @check_enabled = true
 
-        check = ENV['VAGRANT_OPENSTACK_VERSION_CKECK']
+        check = ENV['VAGRANT_OPENSTACK_VERSION_CHECK']
         @check_enabled = false if check && check.upcase == 'DISABLED'
       end
 
