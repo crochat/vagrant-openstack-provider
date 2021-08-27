@@ -80,9 +80,11 @@ module VagrantPlugins
       end
 
       def resolve_volume_boot(env)
+        @logger.info 'Resolving volume boot'
         config = env[:machine].provider_config
+        @logger.debug config.volume_boot
         return nil if config.volume_boot.nil?
-        return resolve_volume_without_volume_service(env, config.volume_boot, 'vda') unless env[:openstack_client].session.endpoints.key? :volume
+        return resolve_volume_without_volume_service(env, config.volume_boot, 'vda') unless env[:openstack_client].session.endpoints.key? :volume or env[:openstack_client].session.endpoints.key? :volumev2
 
         volume_list = env[:openstack_client].cinder.get_all_volumes(env)
         volume_ids = volume_list.map(&:id)
@@ -109,7 +111,7 @@ module VagrantPlugins
         config = env[:machine].provider_config
         return [] if config.volumes.nil? || config.volumes.empty?
         env[:ui].info(I18n.t('vagrant_openstack.finding_volumes'))
-        return resolve_volumes_without_volume_service(env) unless env[:openstack_client].session.endpoints.key? :volume
+        return resolve_volumes_without_volume_service(env) unless env[:openstack_client].session.endpoints.key? :volume or env[:openstack_client].session.endpoints.key? :volumev2
 
         volume_list = env[:openstack_client].cinder.get_all_volumes(env)
         volume_ids = volume_list.map(&:id)

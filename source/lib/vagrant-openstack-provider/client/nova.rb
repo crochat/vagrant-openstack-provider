@@ -72,6 +72,7 @@ module VagrantPlugins
         server = {}.tap do |s|
           s['name'] = options[:name]
           if options[:image_ref].nil?
+            env[:ui].info(options)
             s['block_device_mapping'] = [{ volume_id: options[:volume_boot][:id],
                                            device_name: options[:volume_boot][:device] }] if options[:volume_boot].key?(:id)
             s['block_device_mapping_v2'] = [{ boot_index: '0',
