@@ -68,6 +68,13 @@ module VagrantPlugins
         JSON.parse(image_json)['image']
       end
 
+      def get_volume_details(env, volume_id)
+        if @session.endpoints.key? :volumev3
+          volume_json = get(env, "#{@session.endpoints[:volumev3]}/volumes/#{volume_id}")
+          JSON.parse(volume_json)['volume']
+        end
+      end
+
       def create_server(env, options)
         server = {}.tap do |s|
           s['name'] = options[:name]
@@ -83,6 +90,13 @@ module VagrantPlugins
                                               destination_type: 'volume',
                                               delete_on_termination: options[:volume_boot][:delete_on_destroy] }]\
                                               if options[:volume_boot].key?(:image)
+            s['block_device_mapping_v2'] = [{ boot_index: '0',
+                                              uuid: options[:volume_boot][:volume],
+                                              device_name: options[:volume_boot][:device],
+                                              source_type: 'volume',
+                                              destination_type: 'volume',
+                                              delete_on_termination: options[:volume_boot][:delete_on_destroy] }]\
+                                              if options[:volume_boot].key?(:volume)
           else
             s['imageRef'] = options[:image_ref]
           end

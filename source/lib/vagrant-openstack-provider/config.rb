@@ -245,6 +245,10 @@ module VagrantPlugins
 
       #
       # @return [Integer]
+      attr_accessor :volume_create_timeout
+
+      #
+      # @return [Integer]
       attr_accessor :server_create_timeout
 
       #
@@ -350,6 +354,7 @@ module VagrantPlugins
         @user_data = UNSET_VALUE
         @metadata = UNSET_VALUE
         @ssh_disabled = UNSET_VALUE
+        @volume_create_timeout = UNSET_VALUE
         @server_create_timeout = UNSET_VALUE
         @server_active_timeout = UNSET_VALUE
         @server_stop_timeout = UNSET_VALUE
@@ -492,6 +497,7 @@ module VagrantPlugins
         @ssh_username = nil if @ssh_username == UNSET_VALUE
         @ssh_timeout = nil if @ssh_timeout == UNSET_VALUE
 
+        @volume_create_timeout = 200 if @volume_create_timeout == UNSET_VALUE
         @server_create_timeout = 200 if @server_create_timeout == UNSET_VALUE
         @server_active_timeout = 200 if @server_active_timeout == UNSET_VALUE
         @server_stop_timeout = 200 if @server_stop_timeout == UNSET_VALUE

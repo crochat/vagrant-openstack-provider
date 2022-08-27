@@ -84,7 +84,7 @@ module VagrantPlugins
         config = env[:machine].provider_config
         @logger.debug config.volume_boot
         return nil if config.volume_boot.nil?
-        return resolve_volume_without_volume_service(env, config.volume_boot, 'vda') unless env[:openstack_client].session.endpoints.key? :volume or env[:openstack_client].session.endpoints.key? :volumev2
+        return resolve_volume_without_volume_service(env, config.volume_boot, 'vda') unless env[:openstack_client].session.endpoints.key? :volume or env[:openstack_client].session.endpoints.key? :volumev2 or env[:openstack_client].session.endpoints.key? :volumev3
 
         volume_list = env[:openstack_client].cinder.get_all_volumes(env)
         volume_ids = volume_list.map(&:id)
@@ -96,13 +96,14 @@ module VagrantPlugins
         device = (volume[:device].nil?) ? 'vda' : volume[:device]
         size = (volume[:size].nil?) ? nil : volume[:size]
         delete_on_destroy = (volume[:delete_on_destroy].nil?) ? nil : volume[:delete_on_destroy]
+        volume_type = (volume[:volume_type].nil?) ? nil : volume[:volume_type]
 
         image = resolve_volume_boot_image(env) unless volume[:image].nil?
         image_id = (image.nil?) ? nil : image.id
         if image.nil?
           return { id: volume[:id], device: device }
         else
-          { image: image_id, device: device, size: size, delete_on_destroy: delete_on_destroy }
+          { image: image_id, device: device, size: size, delete_on_destroy: delete_on_destroy, volume_type: volume_type }
         end
       end
 
@@ -111,7 +112,7 @@ module VagrantPlugins
         config = env[:machine].provider_config
         return [] if config.volumes.nil? || config.volumes.empty?
         env[:ui].info(I18n.t('vagrant_openstack.finding_volumes'))
-        return resolve_volumes_without_volume_service(env) unless env[:openstack_client].session.endpoints.key? :volume or env[:openstack_client].session.endpoints.key? :volumev2
+        return resolve_volumes_without_volume_service(env) unless env[:openstack_client].session.endpoints.key? :volume or env[:openstack_client].session.endpoints.key? :volumev2 or env[:openstack_client].session.endpoints.key? :volumev3
 
         volume_list = env[:openstack_client].cinder.get_all_volumes(env)
         volume_ids = volume_list.map(&:id)
@@ -284,6 +285,7 @@ module VagrantPlugins
         device = nil
         device = volume[:device] if volume.key?(:device)
         delete_on_destroy = (volume[:delete_on_destroy].nil?) ? 'true' : volume[:delete_on_destroy]
+        volume_type = (volume[:volume_type].nil?) ? 'NFS' : volume[:volume_type]
 
         volume_id = nil
         if volume.key?(:id)
@@ -303,7 +305,7 @@ module VagrantPlugins
           fail Errors::UnresolvedVolume, volume: volume unless volume.key?(:size)
           fail Errors::ConflictBootVolume, volume: volume if volume.key?(:id)
           fail Errors::ConflictBootVolume, volume: volume if volume.key?(:name)
-          return { image: volume[:image], device: device, size: volume[:size], delete_on_destroy: delete_on_destroy }
+          return { image: volume[:image], device: device, size: volume[:size], delete_on_destroy: delete_on_destroy, volume_type: volume_type }
         else
           fail Errors::ConflictBootVolume, volume: volume
         end
@@ -311,7 +313,7 @@ module VagrantPlugins
       end
 
       def check_boot_volume_conflict(volume)
-        fail Errors::ConflictBootVolume, volume: volume if volume.key?(:image) || volume.key?(:size) || volume.key?(:delete_on_destroy)
+        fail Errors::ConflictBootVolume, volume: volume if volume.key?(:image) || volume.key?(:size) || volume.key?(:delete_on_destroy) || volume.key?(:volume_type)
       end
 
       # This method finds any matching _thing_ from a list of names

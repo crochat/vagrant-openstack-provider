@@ -30,10 +30,31 @@ module VagrantPlugins
           fail Errors::MissingBootOption if config.image.nil? && config.volume_boot.nil?
           fail Errors::ConflictBootOption unless config.image.nil? || config.volume_boot.nil?
 
+          image = @resolver.resolve_image(env)
+          volume_boot = @resolver.resolve_volume_boot(env)
+          volume_boot_id = nil
+          unless volume_boot[:volume_type].nil?
+            if env[:openstack_client].session.endpoints.key? :volumev3
+              options = {
+                volume_boot: volume_boot
+              }
+
+              volume_boot_id = create_boot_volume(env, options)
+              fail Errors::VolumeNotCreated, volume_type: volume_boot[:volume_type] if volume_boot_id.nil?
+
+              waiting_for_volume_to_be_built(env, volume_boot_id)
+            end
+          end
+
+          if not volume_boot_id.nil?
+            volume_boot[:volume] = volume_boot_id
+            volume_boot.delete :image
+          end
+
           options = {
             flavor: @resolver.resolve_flavor(env),
-            image: @resolver.resolve_image(env),
-            volume_boot: @resolver.resolve_volume_boot(env),
+            image: image,
+            volume_boot: volume_boot,
             networks: @resolver.resolve_networks(env),
             volumes: @resolver.resolve_volumes(env),
             keypair_name: @resolver.resolve_keypair(env),
@@ -60,6 +81,36 @@ module VagrantPlugins
         end
 
         private
+
+        def create_boot_volume(env, options)
+          @logger.info "Creating boot volume of type: #{options[:volume_boot][:volume_type]}"
+          config = env[:machine].provider_config
+          cinder = env[:openstack_client].cinder
+          volume_name = config.server_name || env[:machine].name
+
+          create_opts = {
+            name: volume_name,
+            volume_boot: options[:volume_boot]
+          }
+
+          cinder.create_boot_volume(env, create_opts)
+        end
+
+        def waiting_for_volume_to_be_built(env, volume_id, retry_interval = 3)
+          @logger.info "Waiting for the volume with id #{volume_id} to be built..."
+          env[:ui].info(I18n.t('vagrant_openstack.waiting_for_build'))
+          config = env[:machine].provider_config
+          Timeout.timeout(config.volume_create_timeout, Errors::Timeout) do
+            volume_status = 'creating'
+            until volume_status == 'available'
+              @logger.debug 'Waiting for volume to be available'
+              volume_status = env[:openstack_client].cinder.get_volume_details(env, volume_id)['status']
+              fail Errors::VolumeStatusError, volume: volume_id if volume_status == 'error'
+              sleep retry_interval
+            end
+            @logger.info "Volume ID #{volume_id} is ready"
+          end
+        end
 
         def create_server(env, options)
           config = env[:machine].provider_config

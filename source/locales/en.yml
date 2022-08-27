@@ -260,6 +260,8 @@ en:
       volume_service_unavailable: |-
         Cinder service endpoint is not available, thus there is not way to retrieve
         volume id from its name. You have to provide only ids in your Vagrantfile.
+      volume_not_created: |-
+        Failed to create requested %{volume_type} volume.
       server_status_error: |-
         Server '%{server}' is in error status.
       stack_status_error: |-

@@ -84,6 +84,55 @@ module VagrantPlugins
         end
       end
 
+      class VolumeType < Item
+        #
+        # Description
+        #
+        attr_accessor :description
+
+        #
+        # Whether the volume type is publicly visible
+        #
+        attr_accessor :is_public
+
+        #
+        # Extra specs
+        #
+        attr_accessor :extra_specs
+
+        #
+        # The QoS specifications ID
+        #
+        attr_accessor :qos_specs_id
+
+        # rubocop:disable Metrics/ParameterLists
+        def initialize(id, name, description, is_public, extra_specs=nil, qos_specs_id=nil)
+          @description = description
+          @is_public = is_public
+          @extra_specs = extra_specs
+          @qos_specs_id = qos_specs_id
+          super(id, name)
+        end
+        # rubocop:enable Metrics/ParameterLists
+
+        def to_s
+          {
+            id: @id,
+            name: @name,
+            description: @description,
+            is_public: @is_public,
+            extra_specs: @extra_specs,
+            qos_specs_id: @qos_specs_id
+          }.to_json
+        end
+
+        protected
+
+        def state
+          [@id, @name, @description, @is_public, @extra_specs, @qos_specs_id]
+        end
+      end
+
       class Volume < Item
         #
         # Size in Gigaoctet
@@ -110,13 +159,19 @@ module VagrantPlugins
         #
         attr_accessor :device
 
+        #
+        # Storage type
+        #
+        attr_accessor :volume_type
+
         # rubocop:disable Metrics/ParameterLists
-        def initialize(id, name, size, status, bootable, instance_id, device)
+        def initialize(id, name, size, status, bootable, instance_id, device, volume_type=nil)
           @size = size
           @status = status
           @bootable = bootable
           @instance_id = instance_id
           @device = device
+          @volume_type = volume_type
           super(id, name)
         end
         # rubocop:enable Metrics/ParameterLists
@@ -129,14 +184,15 @@ module VagrantPlugins
             status: @status,
             bootable: @bootable,
             instance_id: @instance_id,
-            device: @device
+            device: @device,
+            volume_type: @volume_type
           }.to_json
         end
 
         protected
 
         def state
-          [@id, @name, @size, @status, @bootable, @instance_id, @device]
+          [@id, @name, @size, @status, @bootable, @instance_id, @device, @volume_type]
         end
       end
 

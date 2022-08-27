@@ -139,6 +139,10 @@ module VagrantPlugins
         error_key(:missing_boot_option)
       end
 
+      class VolumeNotCreated < VagrantOpenstackError
+        error_key(:volume_not_created)
+      end
+
       class ConflictBootOption < VagrantOpenstackError
         error_key(:conflict_boot_option)
       end
