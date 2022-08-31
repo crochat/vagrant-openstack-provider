@@ -1,7 +1,7 @@
 require 'log4r'
 require 'rbconfig'
-require 'vagrant/util/subprocess'
 
+require 'vagrant/util/subprocess'
 require 'vagrant-openstack-provider/action/abstract_action'
 
 module VagrantPlugins

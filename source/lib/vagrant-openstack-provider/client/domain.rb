@@ -133,6 +133,116 @@ module VagrantPlugins
         end
       end
 
+      class VolumeSnapshot < Item
+        #
+        # The snapshot UUID
+        #
+        attr_accessor :id
+
+        #
+        # The status of the volume snapshot (e.g. 'Available', 'In-use')
+        #
+        attr_accessor :status
+
+        #
+        # A description for the volume snapshot
+        #
+        attr_accessor :description
+
+        #
+        # The date and time when the resource was created (ISO 8601)
+        #
+        attr_accessor :created_at
+
+        #
+        # The date and time when the resource was updated (ISO 8601)
+        #
+        attr_accessor :updated_at
+
+        #
+        # The UUID of the user
+        #
+        attr_accessor :user_id
+
+        #
+        # If the snapshot was created from a volume, the volume ID
+        #
+        attr_accessor :volume_id
+
+        #
+        # The size of the volume snapshot
+        #
+        attr_accessor :size
+
+        #
+        # One or more metadata key and value pairs for the volume snapshot, if any
+        #
+        attr_accessor :metadata
+
+        #
+        # The ID of the group volume snapshot
+        #
+        attr_accessor :group_snapshot_id
+
+        #
+        # The name of the object (optional)
+        #
+        attr_accessor :name
+
+        #
+        # Links for the volume snapshot (optional)
+        #
+        attr_accessor :snapshot_links
+
+        #
+        # Whether this resource consumes quota or not. Resources that not counted for quota usage are usually temporary internal resources created to perform an operation (optional)
+        #
+        attr_accessor :consumes_quota
+
+
+        # rubocop:disable Metrics/ParameterLists
+        def initialize(id, status, description, created_at, updated_at, user_id, volume_id, size, metadata, group_snapshot_id, name=nil, snapshot_links=nil, consumes_quota=nil)
+          @id = id
+          @status = status
+          @description = description
+          @created_at = created_at
+          @updated_at = updated_at
+          @user_id = user_id
+          @volume_id = volume_id
+          @size = size
+          @metadata = metadata
+          @group_snapshot_id = group_snapshot_id
+          @name = name
+          @snapshot_links = snapshot_links
+          @consumes_quota = consumes_quota
+          super(id, name)
+        end
+        # rubocop:enable Metrics/ParameterLists
+
+        def to_s
+          {
+            id: @id,
+            status: @status,
+            description: @description,
+            created_at: @created_at,
+            updated_at: @updated_at,
+            user_id: @user_id,
+            size: @size,
+            metadata: @metadata,
+            group_snapshot_id: @group_snapshot_id,
+            name: @name,
+            snapshot_links: @snapshot_links,
+            consumes_quota: @consumes_quota
+          }.to_json
+        end
+
+        protected
+
+        def state
+          [@id, @status, @description, @created_at, @updated_at, @user_id, @size, @metadata, @group_snapshot_id, @name, @snapshot_links, @consumes_quota]
+        end
+      end
+
       class Volume < Item
         #
         # Size in Gigaoctet

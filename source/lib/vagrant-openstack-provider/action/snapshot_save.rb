@@ -26,7 +26,7 @@ module VagrantPlugins
             loop do
               image_status = nova.get_image_details(env, image.id)
 
-              break if image_status['status'] == 'ACTIVE'
+              break if image_status['status'].upcase == 'ACTIVE'
 
               unless image_status['progress'].nil?
                 env[:ui].clear_line

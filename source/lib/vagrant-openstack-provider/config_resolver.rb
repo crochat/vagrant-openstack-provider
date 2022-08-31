@@ -285,7 +285,7 @@ module VagrantPlugins
         device = nil
         device = volume[:device] if volume.key?(:device)
         delete_on_destroy = (volume[:delete_on_destroy].nil?) ? 'true' : volume[:delete_on_destroy]
-        volume_type = (volume[:volume_type].nil?) ? 'NFS' : volume[:volume_type]
+        volume_type = volume[:volume_type] if not volume[:volume_type].nil?
 
         volume_id = nil
         if volume.key?(:id)

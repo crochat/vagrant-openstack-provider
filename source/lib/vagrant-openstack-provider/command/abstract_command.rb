@@ -1,5 +1,6 @@
-require 'vagrant-openstack-provider/client/openstack'
 require 'colorize'
+
+require 'vagrant-openstack-provider/client/openstack'
 
 module VagrantPlugins
   module Openstack

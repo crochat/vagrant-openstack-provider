@@ -19,7 +19,7 @@ module VagrantPlugins
             client = env[:openstack_client].nova
             config = env[:machine].provider_config
             Timeout.timeout(config.server_active_timeout, Errors::Timeout) do
-              while client.get_server_details(env, env[:machine].id)['status'] != 'ACTIVE'
+              while client.get_server_details(env, env[:machine].id)['status'].upcase != 'ACTIVE'
                 sleep @retry_interval
                 @logger.info('Waiting for server to be active')
               end

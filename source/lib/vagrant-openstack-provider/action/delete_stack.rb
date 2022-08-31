@@ -59,10 +59,10 @@ module VagrantPlugins
           config = env[:machine].provider_config
           Timeout.timeout(config.stack_delete_timeout, Errors::Timeout) do
             stack_status = 'DELETE_IN_PROGRESS'
-            until stack_status == 'DELETE_COMPLETE'
+            until stack_status.upcase == 'DELETE_COMPLETE'
               @logger.debug('Waiting for stack to be DELETED')
               stack_status = env[:openstack_client].heat.get_stack_details(env, stack_name, stack_id)['stack_status']
-              fail Errors::StackStatusError, stack: stack_id if stack_status == 'DELETE_FAILED'
+              fail Errors::StackStatusError, stack: stack_id if stack_status.upcase == 'DELETE_FAILED'
               sleep retry_interval
             end
           end

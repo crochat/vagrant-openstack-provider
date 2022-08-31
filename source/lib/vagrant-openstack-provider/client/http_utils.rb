@@ -40,6 +40,21 @@ module VagrantPlugins
         end
       end
 
+      def put(env, url, body = nil, headers = {})
+        calling_method = caller[0][/`.*'/][1..-2]
+        @logger.debug("#{calling_method} - start")
+
+        headers.merge!('X-Auth-Token' => @session.token, :accept => :json, :content_type => :json)
+
+        log_request(:PUT, url, body, headers)
+
+        authenticated(env) do
+          RestUtils.put(env, url, body, headers) { |res| handle_response(res) }.tap do
+            @logger.debug("#{calling_method} - end")
+          end
+        end
+      end
+
       def delete(env, url, headers = {})
         calling_method = caller[0][/`.*'/][1..-2]
         @logger.debug("#{calling_method} - start")

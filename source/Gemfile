@@ -3,7 +3,8 @@ source 'https://rubygems.org'
 gemspec
 
 group :development do
-  gem 'vagrant', git: 'https://github.com/mitchellh/vagrant.git', tag: 'v2.2.15'
+  gem 'vagrant', git: 'https://github.com/hashicorp/vagrant.git', tag: 'v2.3.0'
+  gem 'colorize'
   gem 'appraisal', '2.4.0'
   gem 'rubocop', '1.12.1', require: false
   gem 'coveralls', require: false

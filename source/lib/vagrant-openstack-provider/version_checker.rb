@@ -1,5 +1,6 @@
 require 'colorize'
 require 'singleton'
+
 require 'vagrant-openstack-provider/version'
 
 module VagrantPlugins

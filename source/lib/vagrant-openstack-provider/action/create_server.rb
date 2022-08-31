@@ -41,8 +41,6 @@ module VagrantPlugins
 
               volume_boot_id = create_boot_volume(env, options)
               fail Errors::VolumeNotCreated, volume_type: volume_boot[:volume_type] if volume_boot_id.nil?
-
-              waiting_for_volume_to_be_built(env, volume_boot_id)
             end
           end
 
@@ -85,7 +83,6 @@ module VagrantPlugins
         def create_boot_volume(env, options)
           @logger.info "Creating boot volume of type: #{options[:volume_boot][:volume_type]}"
           config = env[:machine].provider_config
-          cinder = env[:openstack_client].cinder
           volume_name = config.server_name || env[:machine].name
 
           create_opts = {
@@ -93,23 +90,7 @@ module VagrantPlugins
             volume_boot: options[:volume_boot]
           }
 
-          cinder.create_boot_volume(env, create_opts)
-        end
-
-        def waiting_for_volume_to_be_built(env, volume_id, retry_interval = 3)
-          @logger.info "Waiting for the volume with id #{volume_id} to be built..."
-          env[:ui].info(I18n.t('vagrant_openstack.waiting_for_build'))
-          config = env[:machine].provider_config
-          Timeout.timeout(config.volume_create_timeout, Errors::Timeout) do
-            volume_status = 'creating'
-            until volume_status == 'available'
-              @logger.debug 'Waiting for volume to be available'
-              volume_status = env[:openstack_client].cinder.get_volume_details(env, volume_id)['status']
-              fail Errors::VolumeStatusError, volume: volume_id if volume_status == 'error'
-              sleep retry_interval
-            end
-            @logger.info "Volume ID #{volume_id} is ready"
-          end
+          env[:openstack_client].cinder.create_boot_volume(env, create_opts)
         end
 
         def create_server(env, options)
@@ -190,10 +171,10 @@ module VagrantPlugins
           config = env[:machine].provider_config
           Timeout.timeout(config.server_create_timeout, Errors::Timeout) do
             server_status = 'WAITING'
-            until server_status == 'ACTIVE'
+            until server_status.upcase == 'ACTIVE'
               @logger.debug('Waiting for server to be ACTIVE')
               server_status = env[:openstack_client].nova.get_server_details(env, server_id)['status']
-              fail Errors::ServerStatusError, server: server_id if server_status == 'ERROR'
+              fail Errors::ServerStatusError, server: server_id if server_status.upcase == 'ERROR'
               sleep retry_interval
             end
           end

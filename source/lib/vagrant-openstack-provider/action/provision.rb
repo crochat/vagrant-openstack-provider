@@ -1,7 +1,6 @@
 require 'log4r'
 
 require 'vagrant/action/builder'
-
 require 'vagrant-openstack-provider/action/abstract_action'
 require 'vagrant-openstack-provider/action/read_ssh_info'
 

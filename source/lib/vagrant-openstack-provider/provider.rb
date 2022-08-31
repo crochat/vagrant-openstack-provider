@@ -1,5 +1,4 @@
 require 'vagrant'
-
 require 'vagrant-openstack-provider/action'
 
 module VagrantPlugins

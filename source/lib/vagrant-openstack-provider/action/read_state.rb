@@ -24,7 +24,7 @@ module VagrantPlugins
 
           # Find the machine
           server = env[:openstack_client].nova.get_server_details(env, machine.id)
-          if server.nil? || server['status'] == 'DELETED'
+          if server.nil? || server['status'].upcase == 'DELETED'
             # The machine can't be found
             @logger.info('Machine not found or deleted, assuming it got destroyed.')
             machine.id = nil

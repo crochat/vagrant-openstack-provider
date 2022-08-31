@@ -139,6 +139,10 @@ module VagrantPlugins
         error_key(:missing_boot_option)
       end
 
+      class BadVolumeType < VagrantOpenstackError
+        error_key(:bad_volume_type)
+      end
+
       class VolumeNotCreated < VagrantOpenstackError
         error_key(:volume_not_created)
       end

@@ -19,7 +19,7 @@ module VagrantPlugins
             client = env[:openstack_client].nova
             config = env[:machine].provider_config
             Timeout.timeout(config.server_stop_timeout, Errors::Timeout) do
-              while client.get_server_details(env, env[:machine].id)['status'] != 'SHUTOFF'
+              while client.get_server_details(env, env[:machine].id)['status'].upcase != 'SHUTOFF'
                 sleep @retry_interval
                 @logger.info('Waiting for server to stop')
               end

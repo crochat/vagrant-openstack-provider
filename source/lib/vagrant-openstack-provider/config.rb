@@ -1,5 +1,6 @@
-require 'vagrant'
 require 'colorize'
+
+require 'vagrant'
 require 'vagrant-openstack-provider/config/http'
 
 module VagrantPlugins

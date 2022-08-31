@@ -27,6 +27,14 @@ module VagrantPlugins
                                     ssl_ca_file: config.ssl_ca_file, verify_ssl: config.ssl_verify_peer, &block)
       end
 
+      def self.put(env, url, payload, headers = {}, &block)
+        config = env[:machine].provider_config
+        _set_proxy(config)
+        RestClient::Request.execute(method: :put, url: url, payload: payload, headers: headers,
+                                    timeout: config.http.read_timeout, open_timeout: config.http.open_timeout,
+                                    ssl_ca_file: config.ssl_ca_file, verify_ssl: config.ssl_verify_peer, &block)
+      end
+
       def self.delete(env, url, headers = {}, &block)
         config = env[:machine].provider_config
         _set_proxy(config)

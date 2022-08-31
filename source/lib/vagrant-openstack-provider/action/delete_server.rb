@@ -38,8 +38,8 @@ module VagrantPlugins
               begin
                 @logger.debug('Waiting for instance to be DELETED')
                 server_status = env[:openstack_client].nova.get_server_details(env, instance_id)['status']
-                fail Errors::ServerStatusError, server: instance_id if server_status == 'ERROR'
-                break if server_status == 'DELETED'
+                fail Errors::ServerStatusError, server: instance_id if server_status.upcase == 'ERROR'
+                break if server_status.upcase == 'DELETED'
                 sleep retry_interval
               rescue Errors::InstanceNotFound
                 delete_ok = true

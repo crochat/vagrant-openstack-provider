@@ -62,10 +62,10 @@ module VagrantPlugins
           config = env[:machine].provider_config
           Timeout.timeout(config.stack_create_timeout, Errors::Timeout) do
             stack_status = 'CREATE_IN_PROGRESS'
-            until stack_status == 'CREATE_COMPLETE'
+            until stack_status.upcase == 'CREATE_COMPLETE'
               @logger.debug('Waiting for stack to be CREATED')
               stack_status = env[:openstack_client].heat.get_stack_details(env, stack_name, stack_id)['stack_status']
-              fail Errors::StackStatusError, stack: stack_id if stack_status == 'CREATE_FAILED'
+              fail Errors::StackStatusError, stack: stack_id if stack_status.upcase == 'CREATE_FAILED'
               sleep retry_interval
             end
           end

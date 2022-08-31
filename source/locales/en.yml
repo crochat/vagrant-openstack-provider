@@ -55,6 +55,8 @@ en:
       Launching a server with the following settings...
     not_created: |-
       The server hasn't been created yet. Run `vagrant up` first.
+    volume_ready: |-
+      The volume ID %{id} is ready!
     ready: |-
       The server is ready!
     stopping_server: |-
@@ -71,6 +73,8 @@ en:
       Using floating IP %{floating_ip}
     waiting_for_floating_ip: |-
       Waiting for floating IP %{floating_ip} to be assigned...
+    waiting_for_volume_build: |-
+      Waiting for the volume ID %{id} (type '%{volume_type}') to be built...
     waiting_for_build: |-
       Waiting for the server to be built...
     waiting_for_ssh: |-
@@ -260,6 +264,8 @@ en:
       volume_service_unavailable: |-
         Cinder service endpoint is not available, thus there is not way to retrieve
         volume id from its name. You have to provide only ids in your Vagrantfile.
+      bad_volume_type: |-
+        Bad volume type. Volume type must be one of [%{volume_types}].
       volume_not_created: |-
         Failed to create requested %{volume_type} volume.
       server_status_error: |-
