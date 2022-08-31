@@ -229,7 +229,7 @@ module VagrantPlugins
                   delete_snapshot(env, snapshot_id)
                   delete_volume(env, volume['id'])
 
-                  env[:ui].info("Retyping new volume ID #{new_volume['id']} from #{} to #{volume_type}. This may take a while...")
+                  env[:ui].info("Retyping new volume ID #{new_volume['id']} from #{new_volume['volume_type']} to #{volume_type}. This may take a while...")
                   retype_volume(env, new_volume['id'], volume_type_id)
 
                   if not waiting_for_status(env, 'volume', new_volume['id'], 'AVAILABLE', 30, 1800)
